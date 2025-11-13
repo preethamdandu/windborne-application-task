@@ -396,50 +396,145 @@ function initCharts() {
         }
     });
     
-    // Temperature vs Altitude chart
-    const tempData = [];
-    const altData = [];
+    // Combined Visualization: Balloon Altitude vs Ground Temperature
+    // Match balloon locations with weather data to show combined insights
+    const combinedData = [];
     
-    allBalloonData.forEach(point => {
-        const alt = extractValue(point, 'alt', 'altitude', 'height');
-        const temp = extractValue(point, 'temp', 'temperature');
-        
-        if (alt !== null && temp !== null) {
-            altData.push(alt);
-            tempData.push(temp);
+    // Create a lookup map for weather data by location
+    const weatherLookup = new Map();
+    weatherData.forEach(entry => {
+        if (!entry || entry.temperature === null || entry.temperature === undefined) return;
+        const { lat, lon, temperature } = entry;
+        if (Number.isFinite(lat) && Number.isFinite(lon) && Number.isFinite(temperature)) {
+            // Round to 1 decimal for matching
+            const key = `${lat.toFixed(1)},${lon.toFixed(1)}`;
+            weatherLookup.set(key, temperature);
         }
     });
     
-    const tempCtx = document.getElementById('tempChart').getContext('2d');
-    tempChart = new Chart(tempCtx, {
-        type: 'scatter',
-        data: {
-            datasets: [{
-                label: 'Temperature vs Altitude',
-                data: altData.map((alt, i) => ({ x: alt, y: tempData[i] })),
-                backgroundColor: 'rgba(118, 75, 162, 0.6)',
-                borderColor: '#764ba2'
-            }]
-        },
-        options: {
-            responsive: true,
-            maintainAspectRatio: true,
-            scales: {
-                x: {
-                    title: {
-                        display: true,
-                        text: 'Altitude (m)'
-                    }
-                },
-                y: {
-                    title: {
-                        display: true,
-                        text: 'Temperature (°C)'
-                    }
-                }
+    // Match balloon data with weather data
+    allBalloonData.forEach(point => {
+        const alt = extractValue(point, 'alt', 'altitude', 'height');
+        const lat = extractValue(point, 'lat', 'latitude');
+        const lon = extractValue(point, 'lon', 'longitude');
+        
+        if (alt !== null && Number.isFinite(alt) && Number.isFinite(lat) && Number.isFinite(lon)) {
+            // Try to find matching weather data
+            const key = `${lat.toFixed(1)},${lon.toFixed(1)}`;
+            const groundTemp = weatherLookup.get(key);
+            
+            if (groundTemp !== undefined && Number.isFinite(groundTemp)) {
+                combinedData.push({
+                    altitude: alt,
+                    temperature: groundTemp
+                });
             }
         }
     });
+    
+    // If we have combined data, show it; otherwise show altitude distribution
+    const tempCtx = document.getElementById('tempChart').getContext('2d');
+    
+    if (combinedData.length > 0) {
+        // Show combined data: Balloon Altitude vs Ground Temperature
+        tempChart = new Chart(tempCtx, {
+            type: 'scatter',
+            data: {
+                datasets: [{
+                    label: 'Balloon Altitude vs Ground Temperature',
+                    data: combinedData.map(d => ({ x: d.altitude, y: d.temperature })),
+                    backgroundColor: 'rgba(118, 75, 162, 0.6)',
+                    borderColor: '#764ba2',
+                    pointRadius: 4
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: true,
+                plugins: {
+                    title: {
+                        display: true,
+                        text: 'Combined Data: Balloon Altitude vs Ground Weather',
+                        font: { size: 14 }
+                    },
+                    tooltip: {
+                        callbacks: {
+                            label: function(context) {
+                                return `Altitude: ${context.parsed.x.toFixed(0)}m, Ground Temp: ${context.parsed.y.toFixed(1)}°C`;
+                            }
+                        }
+                    }
+                },
+                scales: {
+                    x: {
+                        title: {
+                            display: true,
+                            text: 'Balloon Altitude (m)'
+                        }
+                    },
+                    y: {
+                        title: {
+                            display: true,
+                            text: 'Ground Temperature (°C)'
+                        }
+                    }
+                }
+            }
+        });
+    } else {
+        // Fallback: Show altitude distribution histogram
+        const altitudeBins = {};
+        allBalloonData.forEach(point => {
+            const alt = extractValue(point, 'alt', 'altitude', 'height');
+            if (alt !== null && Number.isFinite(alt)) {
+                const bin = Math.floor(alt / 5) * 5; // 5m bins
+                altitudeBins[bin] = (altitudeBins[bin] || 0) + 1;
+            }
+        });
+        
+        const bins = Object.keys(altitudeBins).map(Number).sort((a, b) => a - b);
+        const counts = bins.map(bin => altitudeBins[bin]);
+        
+        tempChart = new Chart(tempCtx, {
+            type: 'bar',
+            data: {
+                labels: bins.map(b => `${b}-${b+5}m`),
+                datasets: [{
+                    label: 'Balloon Count by Altitude Range',
+                    data: counts,
+                    backgroundColor: 'rgba(118, 75, 162, 0.6)',
+                    borderColor: '#764ba2',
+                    borderWidth: 1
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: true,
+                plugins: {
+                    title: {
+                        display: true,
+                        text: 'Balloon Distribution by Altitude',
+                        font: { size: 14 }
+                    }
+                },
+                scales: {
+                    x: {
+                        title: {
+                            display: true,
+                            text: 'Altitude Range (m)'
+                        }
+                    },
+                    y: {
+                        beginAtZero: true,
+                        title: {
+                            display: true,
+                            text: 'Number of Balloons'
+                        }
+                    }
+                }
+            }
+        });
+    }
 }
 
 // Update statistics
