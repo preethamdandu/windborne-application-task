@@ -17,15 +17,17 @@ async function init() {
         await loadWeatherData();
         
         // Only render if we have data
+        console.log(`Total data points loaded: ${allBalloonData.length}`);
         if (allBalloonData.length > 0) {
+            console.log('Sample data point:', allBalloonData[0]);
             renderVisualizations();
             updateStats();
             generateInsights();
             hideLoading();
         } else {
             // Show error if no data loaded
-            console.error('No data loaded from API');
-            document.getElementById('error').innerHTML = '<p>⚠️ Unable to load balloon data. The API may be temporarily unavailable or the data format has changed. Please try again later.</p>';
+            console.error('No data loaded from API. Check console for details.');
+            document.getElementById('error').innerHTML = '<p>⚠️ Unable to load balloon data. The API may be temporarily unavailable or the data format has changed. Please check the browser console (F12) for details.</p>';
             showError();
         }
     } catch (error) {
@@ -113,37 +115,43 @@ async function fetchBalloonData(hourStr, hourOffset) {
         
         // Convert array format [lon, lat, alt] to object format
         if (rawData.length > 0 && Array.isArray(rawData[0])) {
-            console.log(`Hour ${hourStr}: Converting array format to objects`);
+            console.log(`Hour ${hourStr}: Converting array format to objects, found ${rawData.length} items`);
             return rawData.map((item, index) => {
-                // Handle array format: [longitude, latitude, altitude] or [lat, lon, alt]
+                // Handle array format: [longitude, latitude, altitude]
                 if (Array.isArray(item) && item.length >= 2) {
-                    // Determine order: if first value is > 90 or < -90, it's longitude
                     const val1 = item[0];
                     const val2 = item[1];
                     const val3 = item[2] || null;
                     
-                    // If first value is outside lat range (-90 to 90), it's longitude
-                    if (Math.abs(val1) > 90) {
-                        // Format: [longitude, latitude, altitude]
-                        return {
-                            lon: val1,
-                            lat: val2,
-                            alt: val3,
-                            longitude: val1,
-                            latitude: val2,
-                            altitude: val3
-                        };
+                    // Standard geospatial format is [longitude, latitude, altitude]
+                    // Longitude: -180 to 180, Latitude: -90 to 90
+                    // If first value is outside lat range, it's definitely longitude
+                    // Otherwise, assume standard [lon, lat, alt] format (common in GeoJSON, etc.)
+                    let lon, lat;
+                    
+                    if (Math.abs(val1) > 90 || Math.abs(val1) > 180) {
+                        // First value is clearly longitude (outside lat range or > 180)
+                        lon = val1;
+                        lat = val2;
+                    } else if (Math.abs(val2) > 90) {
+                        // Second value is outside lat range, so format is [lat, lon]
+                        lat = val1;
+                        lon = val2;
                     } else {
-                        // Format: [latitude, longitude, altitude] or just [lat, lon]
-                        return {
-                            lat: val1,
-                            lon: val2,
-                            alt: val3,
-                            latitude: val1,
-                            longitude: val2,
-                            altitude: val3
-                        };
+                        // Both are in valid ranges, assume standard [lon, lat] format
+                        // (This is the most common format in geospatial data)
+                        lon = val1;
+                        lat = val2;
                     }
+                    
+                    return {
+                        lon: lon,
+                        lat: lat,
+                        alt: val3,
+                        longitude: lon,
+                        latitude: lat,
+                        altitude: val3
+                    };
                 }
                 return item; // Return as-is if not array format
             });
