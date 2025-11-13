@@ -5,13 +5,13 @@
 // IMPORTANT: Fill in your details below before running this script
 
 const applicationData = {
-    name: "YOUR_NAME",  // Replace with your name
-    email: "YOUR_EMAIL@example.com",  // Replace with your email
+    name: "Preetham Dandu",
+    email: "preethamdandu8@gmail.com",
     role: "Junior Web Developer",
-    notes: "I'm a collaborative developer who thrives in team environments, bringing strong communication skills and a passion for building user-focused solutions. I chose the Open-Meteo weather API to combine with WindBorne's balloon data because it provides complementary atmospheric data that helps contextualize the high-altitude measurements, revealing interesting relationships between ground-level weather conditions and balloon trajectories.",
-    submission_url: "YOUR_CHALLENGE_URL",  // Replace with your hosted challenge URL (e.g., https://your-app.vercel.app)
-    portfolio_url: "YOUR_PORTFOLIO_URL",  // Replace with your portfolio project URL
-    resume_url: "YOUR_RESUME_URL"  // Replace with your Google Drive resume link (set to "anyone with link can view")
+    notes: "As a software engineer with experience building production-grade real-time systems and ETL pipelines, I excel at collaborating across research and industry teams to deliver robust, scalable solutions that handle complex data challenges. I chose the Open-Meteo weather API to combine with WindBorne's balloon data because it provides reliable, real-time atmospheric measurements that enable meaningful analysis of how ground-level weather conditions correlate with high-altitude balloon trajectories, creating a comprehensive view of atmospheric dynamics that demonstrates the practical value of combining diverse data sources.",
+    submission_url: "https://windborne-application-task.vercel.app",
+    portfolio_url: "https://preethamdandu.github.io/portfolio/",
+    resume_url: "https://drive.google.com/file/d/1dVdSpnYaIG-V0N0HqOVdTZJtyegRRvVX/view?usp=sharing"
 };
 
 async function submitApplication() {
