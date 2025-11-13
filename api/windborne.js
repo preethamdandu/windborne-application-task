@@ -1,6 +1,6 @@
 const WINDBORNE_BASE_URL = 'https://a.windbornesystems.com/treasure/';
 
-export default async function handler(req, res) {
+module.exports = async function handler(req, res) {
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'GET,OPTIONS');
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
@@ -9,7 +9,7 @@ export default async function handler(req, res) {
     return res.status(200).end();
   }
 
-  const { hour } = req.query;
+  const { hour } = req.query || {};
   const hourParam = Array.isArray(hour) ? hour[0] : hour;
 
   if (!hourParam || !/^\d{2}$/.test(hourParam)) {
@@ -22,8 +22,7 @@ export default async function handler(req, res) {
     const response = await fetch(targetUrl, {
       headers: {
         Accept: 'application/json',
-      },
-      next: { revalidate: 300 },
+      }
     });
 
     if (!response.ok) {
@@ -43,8 +42,4 @@ export default async function handler(req, res) {
     console.error('Proxy fetch failed:', error);
     return res.status(500).json({ error: 'Failed to fetch data from WindBorne API', details: error.message });
   }
-}
-
-export const config = {
-  runtime: 'edge',
 };
