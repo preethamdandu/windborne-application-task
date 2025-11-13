@@ -292,10 +292,17 @@ function initMap() {
     const centerLat = lats.reduce((a, b) => a + b, 0) / lats.length;
     const centerLon = lons.reduce((a, b) => a + b, 0) / lons.length;
 
-    map = L.map('map').setView([centerLat, centerLon], 2);
+    map = L.map('map', {
+        worldCopyJump: false,
+        maxBounds: [[-90, -180], [90, 180]],
+        maxBoundsViscosity: 0.8
+    }).setView([centerLat, centerLon], 2);
 
     L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-        attribution: '© OpenStreetMap contributors'
+        attribution: '© OpenStreetMap contributors',
+        noWrap: true,
+        minZoom: 1,
+        maxZoom: 8
     }).addTo(map);
 
     const MAX_MARKERS = 1000;
@@ -521,23 +528,47 @@ function generateInsights() {
 function renderDataTable() {
     const tbody = document.getElementById('tableBody');
     const recentData = allBalloonData.slice(-20).reverse(); // Last 20 points
-    
+
+    const weatherLookup = new Map();
+    weatherData.forEach(entry => {
+        if (!entry) return;
+        const { lat, lon, temperature, windSpeed } = entry;
+        if (Number.isFinite(lat) && Number.isFinite(lon)) {
+            weatherLookup.set(`${lat.toFixed(1)},${lon.toFixed(1)}`, { temperature, windSpeed });
+        }
+    });
+
+    const formatNumber = (value, digits = 1, suffix = '') => {
+        if (value === null || value === undefined || Number.isNaN(value)) return '-';
+        return `${Number(value).toFixed(digits)}${suffix}`;
+    };
+
     tbody.innerHTML = recentData.map(point => {
         const lat = extractValue(point, 'lat', 'latitude');
         const lon = extractValue(point, 'lon', 'longitude');
         const alt = extractValue(point, 'alt', 'altitude', 'height');
-        const temp = extractValue(point, 'temp', 'temperature');
-        const wind = extractValue(point, 'wind', 'wind_speed', 'windspeed');
+        let temp = extractValue(point, 'temp', 'temperature');
+        let wind = extractValue(point, 'wind', 'wind_speed', 'windspeed');
         const time = point.timestamp ? point.timestamp.toLocaleTimeString() : `Hour ${point.hour || 'N/A'}`;
-        
+
+        if ((temp === null || Number.isNaN(temp)) && Number.isFinite(lat) && Number.isFinite(lon)) {
+            const match = weatherLookup.get(`${lat.toFixed(1)},${lon.toFixed(1)}`);
+            if (match && match.temperature !== null && match.temperature !== undefined) {
+                temp = match.temperature;
+            }
+            if (match && match.windSpeed !== null && match.windSpeed !== undefined && (wind === null || Number.isNaN(wind))) {
+                wind = match.windSpeed;
+            }
+        }
+
         return `
             <tr>
                 <td>${time}</td>
-                <td>${lat !== null ? lat.toFixed(4) : 'N/A'}</td>
-                <td>${lon !== null ? lon.toFixed(4) : 'N/A'}</td>
-                <td>${alt !== null ? alt.toFixed(0) : 'N/A'}</td>
-                <td>${temp !== null ? temp.toFixed(1) : 'N/A'}</td>
-                <td>${wind !== null ? wind.toFixed(1) : 'N/A'}</td>
+                <td>${Number.isFinite(lat) ? lat.toFixed(4) : '-'}</td>
+                <td>${Number.isFinite(lon) ? lon.toFixed(4) : '-'}</td>
+                <td>${formatNumber(alt, 0, 'm')}</td>
+                <td>${formatNumber(temp)}</td>
+                <td>${formatNumber(wind)}</td>
             </tr>
         `;
     }).join('');
