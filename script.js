@@ -73,24 +73,51 @@ async function loadBalloonData() {
 
 // Fetch data for a specific hour with error handling
 async function fetchBalloonData(hourStr, hourOffset) {
+    const proxyUrl = `/api/windborne?hour=${hourStr}`;
+    const directUrl = `${WINDBORNE_BASE_URL}${hourStr}.json`;
+    let response;
+
     try {
-        const url = `${WINDBORNE_BASE_URL}${hourStr}.json`;
-        const response = await fetch(url, { 
+        response = await fetch(proxyUrl, {
             method: 'GET',
-            headers: { 'Accept': 'application/json' }
+            headers: { 'Accept': 'application/json' },
+            cache: 'no-cache'
         });
-        
+
         if (!response.ok) {
-            throw new Error(`HTTP ${response.status}`);
+            throw new Error(`Proxy HTTP ${response.status}`);
         }
-        
+
+        console.log(`Hour ${hourStr}: Loaded via proxy API`);
+    } catch (proxyError) {
+        console.warn(`Hour ${hourStr}: Proxy fetch failed (${proxyError.message}). Attempting direct fetch.`);
+
+        try {
+            response = await fetch(directUrl, {
+                method: 'GET',
+                headers: { 'Accept': 'application/json' },
+                cache: 'no-cache'
+            });
+
+            if (!response.ok) {
+                throw new Error(`HTTP ${response.status}`);
+            }
+
+            console.log(`Hour ${hourStr}: Loaded via direct API`);
+        } catch (directError) {
+            console.error(`Hour ${hourStr}: Direct fetch failed (${directError.message})`);
+            return null;
+        }
+    }
+
+    try {
         const data = await response.json();
-        
+
         // Log the data structure for debugging
         console.log(`Hour ${hourStr} data structure:`, typeof data, Array.isArray(data) ? 'Array' : Object.keys(data));
-        
+
         let rawData = [];
-        
+
         // Handle different data structures
         if (Array.isArray(data)) {
             console.log(`Hour ${hourStr}: Found array with ${data.length} items`);
@@ -112,7 +139,7 @@ async function fetchBalloonData(hourStr, hourOffset) {
                 }
             }
         }
-        
+
         // Convert array format [lon, lat, alt] to object format
         if (rawData.length > 0 && Array.isArray(rawData[0])) {
             console.log(`Hour ${hourStr}: Converting array format to objects, found ${rawData.length} items`);
@@ -122,13 +149,13 @@ async function fetchBalloonData(hourStr, hourOffset) {
                     const val1 = item[0];
                     const val2 = item[1];
                     const val3 = item[2] || null;
-                    
+
                     // Standard geospatial format is [longitude, latitude, altitude]
                     // Longitude: -180 to 180, Latitude: -90 to 90
                     // If first value is outside lat range, it's definitely longitude
                     // Otherwise, assume standard [lon, lat, alt] format (common in GeoJSON, etc.)
                     let lon, lat;
-                    
+
                     if (Math.abs(val1) > 90 || Math.abs(val1) > 180) {
                         // First value is clearly longitude (outside lat range or > 180)
                         lon = val1;
@@ -143,7 +170,7 @@ async function fetchBalloonData(hourStr, hourOffset) {
                         lon = val1;
                         lat = val2;
                     }
-                    
+
                     return {
                         lon: lon,
                         lat: lat,
@@ -156,13 +183,14 @@ async function fetchBalloonData(hourStr, hourOffset) {
                 return item; // Return as-is if not array format
             });
         }
-        
+
         return rawData;
-    } catch (error) {
-        console.warn(`Failed to fetch hour ${hourStr}:`, error.message);
+    } catch (parseError) {
+        console.error(`Hour ${hourStr}: Failed to parse response`, parseError);
         return null;
     }
 }
+
 
 // Validate data point structure
 function isValidDataPoint(point) {

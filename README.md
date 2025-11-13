@@ -10,6 +10,7 @@ The application fetches the last 24 hours of balloon data by querying WindBorne'
 
 - Calculates the current UTC hour and fetches data for the previous 24 hours
 - Uses `Promise.allSettled()` to handle individual hour failures gracefully
+- Routes all API requests through a Vercel Edge Function proxy (`/api/windborne`) to avoid CORS issues
 - Implements robust data parsing to handle varying JSON structures (arrays, nested objects, different field names)
 - Validates each data point to ensure it contains required latitude/longitude coordinates
 - Extracts values using flexible field name matching (`lat`/`latitude`, `lon`/`longitude`, `alt`/`altitude`/`height`, etc.)
@@ -82,6 +83,14 @@ npm start
 ```
 
 Or use any static file server. Note: CORS restrictions may prevent API calls when opening `index.html` directly via `file://` protocol.
+
+For full parity with the production proxy, install the Vercel CLI and run:
+
+```bash
+vercel dev
+```
+
+This spins up the same `/api/windborne` edge function locally.
 
 ## API Endpoints
 
