@@ -1,0 +1,250 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Submit Application - WindBorne Systems</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+        
+        .container {
+            background: white;
+            border-radius: 12px;
+            padding: 40px;
+            max-width: 600px;
+            width: 100%;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+        }
+        
+        h1 {
+            color: #333;
+            margin-bottom: 10px;
+        }
+        
+        .subtitle {
+            color: #666;
+            margin-bottom: 30px;
+        }
+        
+        .form-group {
+            margin-bottom: 20px;
+        }
+        
+        label {
+            display: block;
+            margin-bottom: 5px;
+            color: #333;
+            font-weight: 500;
+        }
+        
+        input, textarea {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #ddd;
+            border-radius: 6px;
+            font-size: 14px;
+            font-family: inherit;
+            transition: border-color 0.2s;
+        }
+        
+        input:focus, textarea:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+        
+        textarea {
+            resize: vertical;
+            min-height: 100px;
+        }
+        
+        .help-text {
+            font-size: 12px;
+            color: #666;
+            margin-top: 5px;
+        }
+        
+        button {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 14px 30px;
+            border-radius: 6px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            width: 100%;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+        
+        button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+        }
+        
+        button:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+        
+        .result {
+            margin-top: 20px;
+            padding: 15px;
+            border-radius: 6px;
+            display: none;
+        }
+        
+        .result.success {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+        
+        .result.error {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+        
+        .preview {
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 6px;
+            margin-top: 20px;
+            font-family: monospace;
+            font-size: 12px;
+            white-space: pre-wrap;
+            word-break: break-all;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🌐 WindBorne Application Submission</h1>
+        <p class="subtitle">Fill in your details and submit your application</p>
+        
+        <form id="applicationForm">
+            <div class="form-group">
+                <label for="name">Name *</label>
+                <input type="text" id="name" required>
+            </div>
+            
+            <div class="form-group">
+                <label for="email">Email *</label>
+                <input type="email" id="email" required>
+            </div>
+            
+            <div class="form-group">
+                <label for="submission_url">Coding Challenge URL *</label>
+                <input type="url" id="submission_url" placeholder="https://your-app.vercel.app" required>
+                <div class="help-text">Your hosted coding challenge application URL</div>
+            </div>
+            
+            <div class="form-group">
+                <label for="portfolio_url">Portfolio URL *</label>
+                <input type="url" id="portfolio_url" placeholder="https://your-portfolio.com" required>
+                <div class="help-text">URL to your best portfolio project</div>
+            </div>
+            
+            <div class="form-group">
+                <label for="resume_url">Resume URL *</label>
+                <input type="url" id="resume_url" placeholder="https://drive.google.com/..." required>
+                <div class="help-text">Google Drive link to your resume (set to "anyone with link can view")</div>
+            </div>
+            
+            <div class="form-group">
+                <label for="notes">Notes *</label>
+                <textarea id="notes" required>I'm a collaborative developer who thrives in team environments, bringing strong communication skills and a passion for building user-focused solutions. I chose the Open-Meteo weather API to combine with WindBorne's balloon data because it provides complementary atmospheric data that helps contextualize the high-altitude measurements, revealing interesting relationships between ground-level weather conditions and balloon trajectories.</textarea>
+                <div class="help-text">Include your specialization/collaboration sentence and why you chose your external dataset</div>
+            </div>
+            
+            <button type="submit" id="submitBtn">Submit Application</button>
+        </form>
+        
+        <div id="result" class="result"></div>
+        
+        <div id="preview" class="preview" style="display: none;"></div>
+    </div>
+    
+    <script>
+        const form = document.getElementById('applicationForm');
+        const submitBtn = document.getElementById('submitBtn');
+        const result = document.getElementById('result');
+        const preview = document.getElementById('preview');
+        
+        form.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const formData = {
+                name: document.getElementById('name').value,
+                email: document.getElementById('email').value,
+                role: 'Junior Web Developer',
+                notes: document.getElementById('notes').value,
+                submission_url: document.getElementById('submission_url').value,
+                portfolio_url: document.getElementById('portfolio_url').value,
+                resume_url: document.getElementById('resume_url').value
+            };
+            
+            // Show preview
+            preview.style.display = 'block';
+            
+            submitBtn.disabled = true;
+            submitBtn.textContent = 'Submitting...';
+            result.style.display = 'none';
+            
+            try {
+                // Wrap data in career_application object as required by the API
+                const payload = {
+                    career_application: formData
+                };
+                
+                // Show preview with correct format
+                preview.textContent = JSON.stringify(payload, null, 2);
+                
+                const response = await fetch('https://windbornesystems.com/career_applications.json', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(payload)
+                });
+                
+                const responseData = await response.json();
+                
+                if (response.ok && response.status === 200) {
+                    result.className = 'result success';
+                    result.textContent = '✅ Application submitted successfully! Status: ' + response.status;
+                    result.style.display = 'block';
+                    form.reset();
+                } else {
+                    result.className = 'result error';
+                    result.textContent = '❌ Submission failed. Status: ' + response.status + '\nResponse: ' + JSON.stringify(responseData);
+                    result.style.display = 'block';
+                }
+            } catch (error) {
+                result.className = 'result error';
+                result.textContent = '❌ Error: ' + error.message;
+                result.style.display = 'block';
+            } finally {
+                submitBtn.disabled = false;
+                submitBtn.textContent = 'Submit Application';
+            }
+        });
+    </script>
+</body>
+</html>
+

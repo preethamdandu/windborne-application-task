@@ -1,0 +1,19 @@
+{
+  "name": "windborne-balloon-tracker",
+  "version": "1.0.0",
+  "description": "Interactive visualization of WindBorne weather balloon data combined with atmospheric weather data",
+  "main": "index.html",
+  "scripts": {
+    "start": "npx serve .",
+    "dev": "npx serve ."
+  },
+  "keywords": [
+    "weather",
+    "balloons",
+    "visualization",
+    "windborne"
+  ],
+  "author": "",
+  "license": "MIT"
+}
+

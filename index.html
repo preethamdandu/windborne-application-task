@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>WindBorne Balloon Tracker - Weather Analysis</title>
+    <link rel="stylesheet" href="styles.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>🌐 WindBorne Balloon Tracker</h1>
+            <p class="subtitle">Real-time weather balloon data combined with atmospheric conditions</p>
+        </header>
+
+        <div class="stats-grid">
+            <div class="stat-card">
+                <div class="stat-label">Active Balloons</div>
+                <div class="stat-value" id="activeBalloons">-</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-label">Avg Altitude</div>
+                <div class="stat-value" id="avgAltitude">-</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-label">Data Points</div>
+                <div class="stat-value" id="dataPoints">-</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-label">Hours Analyzed</div>
+                <div class="stat-value" id="hoursAnalyzed">-</div>
+            </div>
+        </div>
+
+        <div class="loading" id="loading">
+            <div class="spinner"></div>
+            <p>Loading balloon data and weather information...</p>
+        </div>
+
+        <div class="error" id="error" style="display: none;">
+            <p>⚠️ Error loading data. Please refresh the page.</p>
+        </div>
+
+        <div class="content" id="content" style="display: none;">
+            <div class="map-section">
+                <h2>Balloon Trajectories</h2>
+                <div id="map"></div>
+            </div>
+
+            <div class="charts-section">
+                <div class="chart-container">
+                    <h2>Altitude Over Time</h2>
+                    <canvas id="altitudeChart"></canvas>
+                </div>
+
+                <div class="chart-container">
+                    <h2>Temperature vs Altitude</h2>
+                    <canvas id="tempChart"></canvas>
+                </div>
+            </div>
+
+            <div class="insights-section">
+                <h2>Key Insights</h2>
+                <div id="insights"></div>
+            </div>
+
+            <div class="data-table-section">
+                <h2>Recent Balloon Data</h2>
+                <div class="table-container">
+                    <table id="dataTable">
+                        <thead>
+                            <tr>
+                                <th>Time</th>
+                                <th>Latitude</th>
+                                <th>Longitude</th>
+                                <th>Altitude (m)</th>
+                                <th>Temperature (°C)</th>
+                                <th>Wind Speed (m/s)</th>
+                            </tr>
+                        </thead>
+                        <tbody id="tableBody">
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <footer>
+            <p>Data updates automatically every hour | Last updated: <span id="lastUpdate">-</span></p>
+        </footer>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>
+
