@@ -591,6 +591,12 @@ function showLoading() {
 function hideLoading() {
     document.getElementById('loading').style.display = 'none';
     document.getElementById('content').style.display = 'block';
+
+    if (map) {
+        setTimeout(() => {
+            map.invalidateSize();
+        }, 200);
+    }
 }
 
 function showError() {
