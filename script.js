@@ -15,12 +15,22 @@ async function init() {
         showLoading();
         await loadBalloonData();
         await loadWeatherData();
-        renderVisualizations();
-        updateStats();
-        generateInsights();
-        hideLoading();
+        
+        // Only render if we have data
+        if (allBalloonData.length > 0) {
+            renderVisualizations();
+            updateStats();
+            generateInsights();
+            hideLoading();
+        } else {
+            // Show error if no data loaded
+            console.error('No data loaded from API');
+            document.getElementById('error').innerHTML = '<p>⚠️ Unable to load balloon data. The API may be temporarily unavailable or the data format has changed. Please try again later.</p>';
+            showError();
+        }
     } catch (error) {
         console.error('Error initializing app:', error);
+        document.getElementById('error').innerHTML = `<p>⚠️ Error loading data: ${error.message}. Please check the browser console for details.</p>`;
         showError();
     }
 }
@@ -74,22 +84,30 @@ async function fetchBalloonData(hourStr, hourOffset) {
         
         const data = await response.json();
         
+        // Log the data structure for debugging
+        console.log(`Hour ${hourStr} data structure:`, typeof data, Array.isArray(data) ? 'Array' : Object.keys(data));
+        
         // Handle different data structures
         if (Array.isArray(data)) {
+            console.log(`Hour ${hourStr}: Found array with ${data.length} items`);
             return data;
         } else if (data.data && Array.isArray(data.data)) {
+            console.log(`Hour ${hourStr}: Found data.data array with ${data.data.length} items`);
             return data.data;
         } else if (data.balloons && Array.isArray(data.balloons)) {
+            console.log(`Hour ${hourStr}: Found balloons array with ${data.balloons.length} items`);
             return data.balloons;
         } else if (typeof data === 'object') {
             // Try to extract arrays from object
             const keys = Object.keys(data);
             for (const key of keys) {
                 if (Array.isArray(data[key])) {
+                    console.log(`Hour ${hourStr}: Found array in key '${key}' with ${data[key].length} items`);
                     return data[key];
                 }
             }
-            // If no array found, return empty
+            // If no array found, log the structure
+            console.log(`Hour ${hourStr}: No array found, object keys:`, keys);
             return [];
         }
         
