@@ -87,31 +87,69 @@ async function fetchBalloonData(hourStr, hourOffset) {
         // Log the data structure for debugging
         console.log(`Hour ${hourStr} data structure:`, typeof data, Array.isArray(data) ? 'Array' : Object.keys(data));
         
+        let rawData = [];
+        
         // Handle different data structures
         if (Array.isArray(data)) {
             console.log(`Hour ${hourStr}: Found array with ${data.length} items`);
-            return data;
+            rawData = data;
         } else if (data.data && Array.isArray(data.data)) {
             console.log(`Hour ${hourStr}: Found data.data array with ${data.data.length} items`);
-            return data.data;
+            rawData = data.data;
         } else if (data.balloons && Array.isArray(data.balloons)) {
             console.log(`Hour ${hourStr}: Found balloons array with ${data.balloons.length} items`);
-            return data.balloons;
+            rawData = data.balloons;
         } else if (typeof data === 'object') {
             // Try to extract arrays from object
             const keys = Object.keys(data);
             for (const key of keys) {
                 if (Array.isArray(data[key])) {
                     console.log(`Hour ${hourStr}: Found array in key '${key}' with ${data[key].length} items`);
-                    return data[key];
+                    rawData = data[key];
+                    break;
                 }
             }
-            // If no array found, log the structure
-            console.log(`Hour ${hourStr}: No array found, object keys:`, keys);
-            return [];
         }
         
-        return [];
+        // Convert array format [lon, lat, alt] to object format
+        if (rawData.length > 0 && Array.isArray(rawData[0])) {
+            console.log(`Hour ${hourStr}: Converting array format to objects`);
+            return rawData.map((item, index) => {
+                // Handle array format: [longitude, latitude, altitude] or [lat, lon, alt]
+                if (Array.isArray(item) && item.length >= 2) {
+                    // Determine order: if first value is > 90 or < -90, it's longitude
+                    const val1 = item[0];
+                    const val2 = item[1];
+                    const val3 = item[2] || null;
+                    
+                    // If first value is outside lat range (-90 to 90), it's longitude
+                    if (Math.abs(val1) > 90) {
+                        // Format: [longitude, latitude, altitude]
+                        return {
+                            lon: val1,
+                            lat: val2,
+                            alt: val3,
+                            longitude: val1,
+                            latitude: val2,
+                            altitude: val3
+                        };
+                    } else {
+                        // Format: [latitude, longitude, altitude] or just [lat, lon]
+                        return {
+                            lat: val1,
+                            lon: val2,
+                            alt: val3,
+                            latitude: val1,
+                            longitude: val2,
+                            altitude: val3
+                        };
+                    }
+                }
+                return item; // Return as-is if not array format
+            });
+        }
+        
+        return rawData;
     } catch (error) {
         console.warn(`Failed to fetch hour ${hourStr}:`, error.message);
         return null;
