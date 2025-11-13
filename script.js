@@ -273,50 +273,66 @@ async function fetchWeatherForLocation(lat, lon) {
 function initMap() {
     if (allBalloonData.length === 0) return;
     
-    // Remove existing map if it exists
     if (map) {
         map.remove();
         map = null;
     }
-    
-    // Calculate center from data
-    const lats = allBalloonData.map(p => extractValue(p, 'lat', 'latitude')).filter(v => v !== null);
-    const lons = allBalloonData.map(p => extractValue(p, 'lon', 'longitude')).filter(v => v !== null);
-    
-    if (lats.length === 0 || lons.length === 0) return;
-    
+
+    const validPoints = allBalloonData.filter(point => {
+        const lat = extractValue(point, 'lat', 'latitude');
+        const lon = extractValue(point, 'lon', 'longitude');
+        return Number.isFinite(lat) && Number.isFinite(lon);
+    });
+
+    if (validPoints.length === 0) return;
+
+    const lats = validPoints.map(p => extractValue(p, 'lat', 'latitude'));
+    const lons = validPoints.map(p => extractValue(p, 'lon', 'longitude'));
+
     const centerLat = lats.reduce((a, b) => a + b, 0) / lats.length;
     const centerLon = lons.reduce((a, b) => a + b, 0) / lons.length;
-    
-    map = L.map('map').setView([centerLat, centerLon], 3);
-    
+
+    map = L.map('map').setView([centerLat, centerLon], 2);
+
     L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
         attribution: '© OpenStreetMap contributors'
     }).addTo(map);
-    
-    // Add markers for balloon positions
-    allBalloonData.forEach((point, index) => {
+
+    const MAX_MARKERS = 1000;
+    const step = Math.max(1, Math.floor(validPoints.length / MAX_MARKERS));
+    const markers = [];
+
+    validPoints.forEach((point, index) => {
+        if (index % step !== 0) return;
         const lat = extractValue(point, 'lat', 'latitude');
         const lon = extractValue(point, 'lon', 'longitude');
         const alt = extractValue(point, 'alt', 'altitude', 'height');
-        
-        if (lat !== null && lon !== null) {
-            const popup = `
-                <strong>Balloon Data Point</strong><br>
-                Altitude: ${alt !== null ? alt.toFixed(0) + 'm' : 'N/A'}<br>
-                Hour: ${point.hour || 'N/A'}
-            `;
-            
-            L.circleMarker([lat, lon], {
-                radius: 5,
-                fillColor: '#667eea',
-                color: '#fff',
-                weight: 1,
-                opacity: 0.8,
-                fillOpacity: 0.6
-            }).bindPopup(popup).addTo(map);
-        }
+
+        if (!Number.isFinite(lat) || !Number.isFinite(lon)) return;
+
+        const popup = `
+            <strong>Balloon Data Point</strong><br>
+            Altitude: ${alt !== null ? alt.toFixed(0) + 'm' : 'N/A'}<br>
+            Hour: ${point.hour || 'N/A'}
+        `;
+
+        const marker = L.circleMarker([lat, lon], {
+            radius: 4,
+            fillColor: '#667eea',
+            color: '#fff',
+            weight: 1,
+            opacity: 0.8,
+            fillOpacity: 0.5
+        }).bindPopup(popup);
+
+        marker.addTo(map);
+        markers.push(marker);
     });
+
+    if (markers.length > 0) {
+        const group = L.featureGroup(markers);
+        map.fitBounds(group.getBounds().pad(0.2));
+    }
 }
 
 // Initialize charts
